@@ -25,6 +25,8 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{ "backtrace", "Display the stack backtrace", mon_backtrace },
+	{ "show", "Display beautiful ASCII art", mon_show }
 };
 
 /***** Implementations of basic kernel monitor commands *****/
@@ -61,10 +63,36 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 	// LAB 1: Your code here.
     // HINT 1: use read_ebp().
     // HINT 2: print the current ebp on the first line (not current_ebp[0])
+
+	uint32_t curr_ebp = read_ebp();
+	uint32_t *addr = (uint32_t*)curr_ebp;
+	struct Eipdebuginfo info;
+
+	cprintf("Stack backtrace:\n");
+
+	while(addr != 0x0){
+		cprintf("  ebp %08x  eip %08x", addr, addr[1]);
+		cprintf("  args %08x %08x %08x %08x %08x\n", addr[2], addr[3], addr[4], addr[5], addr[6]);
+
+		debuginfo_eip(addr[1], &info);		
+
+		cprintf("         %s:%d:", info.eip_file, info.eip_line);
+		cprintf(" %.*s+%d\n", info.eip_fn_namelen, info.eip_fn_name, info.eip_fn_narg);
+
+		addr = (uint32_t*)(addr[0]);
+	}
+
 	return 0;
 }
 
+int
+mon_show(int argc, char **argv, struct Trapframe *tf){
 
+	cprintf("\033[1;31mMade\n \033[0;32m   by\n\033[0;33m      Ishaan\n\033[0;34m            and\n\033[0;35m               Eric!\n");
+	cprintf("\033[0m");
+
+	return 0;
+}
 
 /***** Kernel monitor command interpreter *****/
 
